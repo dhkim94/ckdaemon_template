@@ -3,7 +3,18 @@ ckdaemon 으로 데몬 프로세스 만드는 템플릿 이다.
 일반적인 것은 이것을 바탕으로 개발 하면 된다.
 
 ## 실행 방법
-- 시작 : $ go run ckdaemon_template.go -c start
-- 중단 : $ go run ckdaemon_template.go -c stop
+- 시작      : $ go run ckdaemon_template.go -c start
+- 중단      : $ go run ckdaemon_template.go -c stop
+- 환경 리로딩 : $ go run ckdaemon_template.go -c reload
 
-## 기타
+## 정상 실행 확인 방법
+1. start 한다.
+2. start 한 디렉토리에 ckdaemon100.log, ckdaemon100.pid 파일이 생성되는지 확인 한다.
+3. ps -ef | grep ckdaemon100 해서 데몬으로 떠 있는지 확인 한다.
+4. tail -f ckdaemon100.log 로 로그 파일에 tail 을 건다.
+5. 로그를 확인 한다.(worker 로직이 non-block 이면 계속 찍히고 있을 것이고, worker 로직이 block 이면 run daemon loop
+   로그 출력 이후에 멈추어 있을 것이다.
+6. reload 로 reload configuration reload 로그가 찍히는지 확인 한다.
+7. stop 으로 ===== terminated ckdaemon100 ===== 로그가 찍히는지 확인 한다.
+8. ps -ef | grep ckdaemon100 으로 프로세스가 사라졌는지 확인 한다.
+9. ckdaemon100.pid 파일이 삭제 되었는지 확인 한다.
