@@ -1,0 +1,7 @@
+## description
+ckdaemon 으로 데몬 프로세스 만드는 템플릿 이다.
+일반적인 것은 이것을 바탕으로 개발 하면 된다.
+
+## 실행 방법
+- 시작 : $ go run ckdaemon_template.go -c start
+- 중단 : $ go run ckdaemon_template.go -c stop
