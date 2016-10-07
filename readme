@@ -5,3 +5,5 @@ ckdaemon 으로 데몬 프로세스 만드는 템플릿 이다.
 ## 실행 방법
 - 시작 : $ go run ckdaemon_template.go -c start
 - 중단 : $ go run ckdaemon_template.go -c stop
+
+## 기타

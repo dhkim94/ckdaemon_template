@@ -1,8 +1,8 @@
 package main
 
-// 데몬 프로세스를 만들기 위한 템플릿 이다.
-// 기본으로 -c 옵션으로 start, stop, reload, status 명령어가 사용 된다.
-// 템플릿을 그대로 복사 후에 NOTE 단어로 검색하여 나오는 곳 들이 변경 할 곳이니 상황에 맞게 변경 하면 된다.
+// radmin 은 다음 기능을 한다.
+// 1. mqtt broker 상태 모니터링
+// 2. 관리자 웹 서비스
 
 import (
 	env "github.com/dhkim94/ckenv"
@@ -19,8 +19,8 @@ import (
 // 환경 파일과 환경 파일에서 프로세스명 읽어 오기 전에 사용할 프로세스명
 // 환경 파일을 읽어 온 이후에는 프로세스명은 환경 설정에 지정된 값을 사용 한다.
 const (
-	processName	= "ckdaemon_template"
-	confFileName	= "./ckdaemon_template.properties"
+	processName	= "ckdaemon100"
+	confFileName	= "./sample.properties"
 )
 
 var (
@@ -29,8 +29,8 @@ var (
 		stop - fast shutdown
 		status - check status
 		reload - reloading the configuration file`)
-	stop = make(chan  struct{})
-	done = make(chan struct{})
+	stop = make(chan bool)
+	done = make(chan bool)
 )
 
 const (
@@ -105,33 +105,32 @@ func prepare() bool {
 func worker() {
 	slog := env.GetLogger()
 
+
 	for {
 		time.Sleep(time.Second)
 
-		fmt.Println("---loop")
+		slog.Debug("run daemon loop")
 
-		// terminateHandler 에서 stop 신호를 받아서 worker 를 빠져 나간다.
-
-		// 이건 non-block code
-		select {
-		case <-stop:
-			slog.Info("stop non-block worker")
-			goto complete
-		default:
-			slog.Info("continue non-block worker")
-		}
-
-		// 이건 block code
-		//if _, ok := <-stop; ok {
-		//	slog.Info("run block worker")
-		//	break
+		// 이건 non-block code(goroutine 내에서 non-block 이라는 의미임)
+		//select {
+		//case <-stop:
+		//	slog.Info("stop non-block worker")
+		//	goto complete
+		//default:
+		//	slog.Info("continue non-block worker")
 		//}
 
+		// 이건 block code (goroutine 내에서 block 이라는 의미임)
+		if willStop := <-stop; willStop {
+			slog.Info("stop block worker")
+			goto complete
+		} else {
+			slog.Info("continue block worker")
+		}
 	}
 
 	complete:
-		fmt.Println("complete")
-
+		done <-true
 }
 
 // NOTE 다른 데몬 프로세스를 만들때 변경 할 곳
@@ -141,13 +140,11 @@ func terminateHandler(sig os.Signal) error {
 	slog := env.GetLogger()
 	slog.Debug("start terminate handler")
 
-	// worker 에게 멈추라고 신호를 준다.
-	stop <- struct {}{}
+	stop <-true
 
-	if sig == syscall.SIGTERM {
-		//if sig == syscall.SIGQUIT {
-		<- done
-	}
+	stopDone := <-done
+	slog.Debug("in terminate done: %t", stopDone)
+
 
 	slog.Debug("complete terminate handler")
 
@@ -165,7 +162,7 @@ func reloadHandler(sig os.Signal) error {
 	return nil
 }
 
-// ckdaemon_template -c <start|stop|reload|status>
+// radmin -c <start|stop|reload|status>
 func main() {
 	//---------------------------------------
 	// 1. prepare environment
@@ -227,4 +224,3 @@ func main() {
 
 	slog.Info("===== terminated %s =====", dname)
 }
-
